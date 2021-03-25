@@ -52,8 +52,7 @@ reffe=ReferenceFE(lagrangian,Float64,1);
 Vfₕ=TestFESpace(cavModel,reffe,conformity=:H1); #Test space for cavity.
 
 
-
-
-
+a(u,v)=∫(∇(u)⋅∇(v))*dΩf;
+V=nonLocalBoundary.getQphi(k, kd, H, d, N, Ap, cavModel,Γfₙₗ,Vfₕ,Vfₕ);
 
 #A,M,f,g=nonLocalBoundary.getMAT(k, kd, H, d, N, Ap);

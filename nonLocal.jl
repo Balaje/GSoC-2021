@@ -1,5 +1,7 @@
 module nonLocalBoundary
 
+using Gridap
+
 # Function to get the associated matrices on the semi--infinite domain
 function innerproduct(k, kappa, H, d)
     if(abs(k-kappa)>=1e-7)
@@ -29,6 +31,16 @@ function getMAT(k, kd, H, d, NModes, Ap)
 end
 
 # Get the non-local matrix on the boundary
-
+function getQphi(k, kd, H, d, NModes, Ap, model, Γ, V, V0)
+    A,M,f,g=getMAT(k,kd,d,H,NModes,Ap);
+    ndofs=length(model.grid.node_coords); #Get the number of dofs in the domain.
+    pp=zeros(ComplexF64,NModes+1,ndofs);
+    f(x)=cos(kd[2]*(x[2]+H))/cos(kd[2]*(H-d));
+    dΓ=Measure(Γ,2);
+    a(u,v)=∫(u*v)*dΓ;
+    b(v)=∫(f*v)*dΓ;
+    op=AffineFEOperator(a,b,V,V0);
+    return op.op.vector
+end
 
 end
