@@ -1,7 +1,5 @@
 module dispersionEquations
 
-using Roots
-
 ## Function to solve the Dispersion Equation and get one root.
 function oneroot(alpha, guess)
     ans1=guess+1;

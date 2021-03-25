@@ -1,5 +1,7 @@
-using Gridap
 using GridapGmsh
+using Gridap
+using SparseArrays
+using Roots
 
 include("dispersion.jl");
 include("nonLocal.jl");
@@ -24,7 +26,7 @@ kd=dispersionEquations.dispersionfreesurface(alph, N, H-d);
 # Build model for the cavity and ice-shelf.
 cavDomain=(0,L,-H,-d);
 iceDomain=(0,L,-d,h-d);
-partition=(100,100);
+partition=(4,4);
 iceModel=CartesianDiscreteModel(iceDomain,partition);
 cavModel=CartesianDiscreteModel(cavDomain,partition);
 
@@ -45,14 +47,13 @@ add_tag_from_tags!(iceLabels,"neumannIce",[1,2,5])
 add_tag_from_tags!(iceLabels,"dirichletIce",[4,8])
 Γsₙ=BoundaryTriangulation(iceModel,iceLabels,tags="neumannIce");
 
-#Build the spaces for the ice and cavity
+#Build the spaces for the ice and cavity. (In these problems TrialSpace = TestSpace)
 reffe=ReferenceFE(lagrangian,VectorValue{2,Float64},1);
 Vsₕ=TestFESpace(iceModel,reffe,conformity=:H1,dirichlet_tags="dirichletIce",dirichlet_masks=(true,true)); #Test space for Ice
 reffe=ReferenceFE(lagrangian,Float64,1);
 Vfₕ=TestFESpace(cavModel,reffe,conformity=:H1); #Test space for cavity.
 
 
-a(u,v)=∫(∇(u)⋅∇(v))*dΩf;
-V=nonLocalBoundary.getQphi(k, kd, H, d, N, Ap, cavModel,Γfₙₗ,Vfₕ,Vfₕ);
+Qϕ,χ=nonLocalBoundary.getMQχ(k, kd, H, d, N, Ap, cavModel,Γfₙₗ,Vfₕ,Vfₕ);
 
 #A,M,f,g=nonLocalBoundary.getMAT(k, kd, H, d, N, Ap);

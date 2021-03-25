@@ -31,16 +31,28 @@ function getMAT(k, kd, H, d, NModes, Ap)
 end
 
 # Get the non-local matrix on the boundary
-function getQphi(k, kd, H, d, NModes, Ap, model, Γ, V, V0)
-    A,M,f,g=getMAT(k,kd,d,H,NModes,Ap);
+function getMQχ(k, kd, H, d, NModes, Ap, model, Γ, V, V0)
+    A,M,f,g=getMAT(k,kd,H,d,NModes,Ap);
     ndofs=length(model.grid.node_coords); #Get the number of dofs in the domain.
     pp=zeros(ComplexF64,NModes+1,ndofs);
-    f(x)=cos(kd[2]*(x[2]+H))/cos(kd[2]*(H-d));
-    dΓ=Measure(Γ,2);
-    a(u,v)=∫(u*v)*dΓ;
-    b(v)=∫(f*v)*dΓ;
-    op=AffineFEOperator(a,b,V,V0);
-    return op.op.vector
+    for m=1:NModes+1
+        τ(x)=cos(kd[m]*(x[2]+H))/cos(kd[m]*(H-d));
+        dΓ=Measure(Γ,2);
+        a(u,v)=∫(u*v)*dΓ; #Dummy bilinear form ?
+        b(v)=∫(τ*v)*dΓ;
+        op=AffineFEOperator(a,b,V,V0);
+        pp[m,:]=op.op.vector;
+    end
+    # Get the matrix corresponding to Qϕ
+    Mt=transpose(M);
+    T=inv(Mt)*A*inv(M);
+    tP=T*pp;
+    Qϕ=transpose(pp)*tP;
+
+    c=inv(Mt)*g-T*f;
+    χ=transpose(c)*pp;
+
+    return Qϕ,χ;
 end
 
 end
