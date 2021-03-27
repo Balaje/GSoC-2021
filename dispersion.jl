@@ -89,9 +89,8 @@ end
 
 # Function to solve the beam equation 1d.
 function solveEigenEB(N, L)
-    xbar=1;
     rr=zeros(N,1);
-    f(x)=cos(x*L)+2*exp(-x*L)/(1+exp(-x*L)); #cos(x*L)*cosh(x*L)+1;
+    f(x)=cos(x*L)*cosh(x*L)+1; #cos(x*L)*cosh(x*L)+1;
     xbar=π/(2*L);
     count=1;
     while(1>=0)

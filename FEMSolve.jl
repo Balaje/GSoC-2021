@@ -34,7 +34,7 @@ function getLaplaceMatEB(Ω, Γ₃, Vh, Vh0, QΦ, χ, μₘ, L, ω)
     dΩ=Measure(Ω,2);
     dΓ₃=Measure(Γ₃,6); #Interface boundary.
 
-    η(x) = ((cos(L*μₘ) + cosh(L*μₘ))*(sin(μₘ*x[1]) + sinh(μₘ*x[1]))-
+    η(x) = ω*((cos(L*μₘ) + cosh(L*μₘ))*(sin(μₘ*x[1]) + sinh(μₘ*x[1]))-
               (sin(L*μₘ) + sinh(L*μₘ))*(cos(μₘ*x[1]) + cosh(μₘ*x[1])))/
               (cos(L*μₘ) + cosh(L*μₘ));
 
@@ -42,7 +42,8 @@ function getLaplaceMatEB(Ω, Γ₃, Vh, Vh0, QΦ, χ, μₘ, L, ω)
     b(v) = ∫(η*v)*dΓ₃;
     op=AffineFEOperator(a,b,Vh,Vh0);
     K=op.op.matrix+QΦ;
-    f=-(1im*ω)*op.op.vector-(ω==0)*χ[1,:];
+    #print(norm(op.op.vector),"\n")
+    f=-(1im)*op.op.vector-χ[1,:];
     return K,f,op
 end
 
@@ -82,7 +83,7 @@ function buildReducedSystem(μ, ϕ₀, ϕⱼ, α, β, γ, Γ, L, ω, V)
     end
     H=K+B+AB;
     λ=H\F;
-    return λ;
+    return λ, K, B, AB, F;
 end
 
 

@@ -12,30 +12,26 @@ using .dispersionEquations
 using .FEMSolvers
 
 # Some parameters
-ω=2*π/80; # 40s incident wave.
+ω=2*π/400; # 40s incident wave.
 N=5; # Modal expansion in the ocean
 nev=10; #Number of eigenvalues
-L=8000; #Shelf length
-h=100; #Shelf thickness
+L=10000; #Shelf length
+h=200; #Shelf thickness
 d=0.9*h; #Submergence.
 H=800; #Ocean depth
-
-E=11.0e9;
+E=2.0e9;
 ρᵢ=922.5;
 ρₗ=1025;
-ν=0.3;
+ν=0.33;
 EI=E*h^3/(12*(1-ν^2));
 Lc=(EI/(ρₗ*9.8))^0.25;
 tc=sqrt(ρₗ*Lc^6/(EI*H));
-
 LL=L/Lc;
 HH=H/Lc;
 hh=h/Lc;
 dd=d/Lc;
-
 α=HH*(ω*tc)^2;
-Ap=(10/(1im*ω));
-
+Ap=(9.8/(1im*ω));
 
 # Solve the dispersion equation
 k=dispersionEquations.dispersionfreesurface(α, N, HH);
@@ -43,7 +39,7 @@ k[1]=-k[1];
 kd=dispersionEquations.dispersionfreesurface(α, N, HH-dd);
 kd[1]=-kd[1];
 
-partition=(L/H*5,5);
+partition=(200,10);
 
 # Build model for the ice-shelf.
 #iceDomain=(0,L,-d,h-d);
@@ -73,6 +69,7 @@ Vfₕ=TestFESpace(cavModel,reffe,conformity=:H1); #Test space for cavity.
 
 # ------ Get the non-local boundary condition
 Qϕ,χ=nonLocalBoundary.getMQχ(k, kd, HH, dd, N, Ap, cavModel, Γf₄, Vfₕ, Vfₕ);
+print("Done computing non-local boundary condition\n")
 # -----------------------------------------
 
 # First attempt at solving the Elasticity Eigenvalue problem
@@ -82,20 +79,22 @@ Qϕ,χ=nonLocalBoundary.getMQχ(k, kd, HH, dd, N, Ap, cavModel, Γf₄, Vfₕ, V
 #writevtk(Ωs,"results",cellfields=["uh"=>uh]); #To visualize the solution.
 
 # ------- Solve for the velocity potentials
-#Diffraction Potential
+#Diffraction Potential (with a rigid shelf)
 K,f,op=FEMSolvers.getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, χ, 0, LL, 0)
 ϕ₀=K\f;
 # Radiation potential from the Eigenmodes
 μ=dispersionEquations.solveEigenEB(nev, LL);# Obtain the Eigenvalues for the beam equation
 ϕₖ=zeros(ComplexF64,length(χ),nev)
 for m=1:nev
-    K,f,op=FEMSolvers.getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, χ, μ[m], LL, ω)
+    K,f,op=FEMSolvers.getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, 0*χ, μ[m], LL, ω*Lc)
     ϕₖ[:,m]=K\f; # Using the linear algebra package (raw vector)
 end
+print("Done computing potentials\n")
 # -----------------------------------------
 
 # ------ Build and solve the reduced system
-λ=FEMSolvers.buildReducedSystem(μ, ϕ₀, ϕₖ, α, 1, dd, Γf₃, LL, ω, Vfₕ);
+λ,K,B,AB,F=FEMSolvers.buildReducedSystem(μ, ϕ₀, ϕₖ, α, 1, dd, Γf₃, LL, ω, Vfₕ);
+print("Done computing coefficients\n")
 # ----------------------------------
 
 ## Construct the displacement
