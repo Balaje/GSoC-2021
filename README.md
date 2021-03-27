@@ -14,8 +14,8 @@ Solving an example ice-shelf problem with Gridap. Brief description of the modul
 
 Some sample outputs showing the displacement of the ice when forced by a long incident wave. The shelf is rigidly fixed at one end.
 
-| ![Disp](disp1.png) |
-| -- |
+| ![Disp](disp1.png) | ![Disp](disp2.png) |
+| -- | -- | 
 
 ### Reference
 

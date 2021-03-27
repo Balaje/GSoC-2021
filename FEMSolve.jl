@@ -78,7 +78,7 @@ function buildReducedSystem(μ, ϕ₀, ϕⱼ, α, β, γ, Γ, L, ω, V)
                   (sin(L*μₘ) + sinh(L*μₘ))*(cos(μₘ*x[1]) + cosh(μₘ*x[1])))/
                   (cos(L*μₘ) + cosh(L*μₘ));
 
-            AB[j,i]=-(1im)*(ω/10)*sum(∫(ξ*φₖ)*dΓ);
+            AB[i,j]=-(1im)*(ω/10)*sum(∫(ξ*φₖ)*dΓ);
         end
     end
     H=K+B+AB;

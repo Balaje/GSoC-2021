@@ -12,9 +12,9 @@ using .dispersionEquations
 using .FEMSolvers
 
 # Some parameters
-ω=2*π/100; # 40s incident wave.
+ω=2*π/60; # 40s incident wave.
 N=5; # Modal expansion in the ocean
-nev=10; #Number of eigenvalues
+nev=20; #Number of eigenvalues
 L=10000; #Shelf length
 h=200; #Shelf thickness
 d=0.9*h; #Submergence.
