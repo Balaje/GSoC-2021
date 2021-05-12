@@ -38,6 +38,7 @@ k=dispersionEquations.dispersionfreesurface(α, N, HH);
 k[1]=-k[1];
 kd=dispersionEquations.dispersionfreesurface(α, N, HH-dd);
 kd[1]=-kd[1];
+print("Solved dispersion equations\n")
 
 partition=(200,10);
 
