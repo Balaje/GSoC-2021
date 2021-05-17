@@ -1,7 +1,6 @@
 module evalAtPoint
 
 using PolygonOps
-using SparseArrays
 
 using Gridap
 using Gridap.FESpaces
@@ -73,8 +72,6 @@ Define the evaluate function for an FEFunction and Point:
 function evaluate_optim(uh::SingleFieldFEFunction, P::Point)
     U=get_cell_dof_values(uh)
     C=reshape(get_cell_coordinates(get_triangulation(uh)),(length(U),)) # Coordinates
-
-    # Define functions
 
     # inpolygon returns a large array with 0,1,-1: Could it be optimised?
     # This part takes the maximum time and memory.
