@@ -5,7 +5,7 @@ import Gridap: gradient
 
 ## This is from the 3D problem of iceberg stuff.
 domain = (0, 1, 0, 1)
-partition = (40,40)
+partition = (200,200)
 model = CartesianDiscreteModel(domain,partition)
 #model = GmshDiscreteModel("../testmesh.mesh")
 
