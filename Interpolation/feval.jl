@@ -69,18 +69,28 @@ Define the evaluate function for an FEFunction and Point:
 
 """
 
+function evaluate_vectorized(uh::SingleFieldFEFunction, P::Point)
+    U=get_cell_dof_values(uh)
+    C=reshape(get_cell_coordinates(get_triangulation(uh)), (length(U),))
+    indx=findall(x->abs(x)>0, inpolygon.(P,coord2polygon.(C)))
+    nloc=length(U[1])
+    MapArr=inv.(coord2map.(C))
+    PtArr=fill(point2map(P,nloc),length(U))
+    loc2glob=MapArr.*PtArr
+    Uvals=dot.(U,loc2glob)
+    return Uvals[indx[1]]
+
+end
+
 function evaluate_optim(uh::SingleFieldFEFunction, P::Point)
     U=get_cell_dof_values(uh)
     C=reshape(get_cell_coordinates(get_triangulation(uh)),(length(U),)) # Coordinates
-
     # inpolygon returns a large array with 0,1,-1: Could it be optimised?
     # This part takes the maximum time and memory.
     indx=findall(x->abs(x)>0, inpolygon.(P,coord2polygon.(C))) #Find the index
-
     nloc=length(U[1]) # Number of local dofs
     MapArr=lazy_map(inv, lazy_map(coord2map,C))
     PtArr=Fill(point2map(P,nloc),length(U))
-
     loc2glob=lazy_map(*, MapArr,PtArr)
     Uvals=lazy_map(dot,loc2glob,U)
     return Uvals[indx[1]] #Simply return the first index.
