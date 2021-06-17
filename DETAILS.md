@@ -26,7 +26,7 @@ the modules are below:
 Some sample outputs showing the displacement of the ice when forced by
 a long incident wave. The shelf is rigidly fixed at one end.
 
-| ![Disp](disp1.png) | ![Disp](disp2.png) |
+| ![Disp](Images/disp1.png) | ![Disp](Images/disp2.png) |
 | -- | -- |
 
 ### Reference
@@ -76,5 +76,5 @@ The time taken by the naive approach is ~10x larger than the optimised
 version. The bulk of the time is taken by the (external)`inpolygon`
 function which is used to find the location of the point in the
 discretization. This part of the code could be optimised further ...
-| ![Compare](./lazymap.png) |
+| ![Compare](./Images/lazymap.png) |
 | --
