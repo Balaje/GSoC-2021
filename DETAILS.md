@@ -80,3 +80,7 @@ discretization. This part of the code could be optimised further ...
 | --
 
 ## Interpolating Lagrange elements
+
+Check out this [task
+list](https://github.com/Balaje/Gridap.jl/issues/1) for full
+details. I will update the info of the scripts shortly.
