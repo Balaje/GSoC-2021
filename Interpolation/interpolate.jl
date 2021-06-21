@@ -26,8 +26,8 @@ writevtk(Ω1,"source",cellfields=["fh"=>fh])
 # Second FE Space
 function rndm(p::Point)
     r, s = p
-    x = r + 0.1*sin(2π*r)*sin(2π*s)
-    y = s + 0.1*sin(2π*r)*sin(2π*s)
+    x = r + 0.02*sin(2π*r)*sin(2π*s)
+    y = s + 0.02*sin(2π*r)*sin(2π*s)
     Point(x,y)
 end
 partition=(40,40)
@@ -37,9 +37,8 @@ reffe = ReferenceFE(lagrangian, Float64, 2)
 V2 = FESpace(model2, reffe)
 
 # Main Solution
-cache = return_cache(fh, VectorValue(zeros(2)...));
 phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
-fh_phys_coords(x) = evaluate!(cache, fh, x)
+fh_phys_coords(x) = evaluate(fh, x)
 gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
 
 # Write the solution
