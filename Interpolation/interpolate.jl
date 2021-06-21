@@ -13,13 +13,14 @@ using Random
 
 domain = (0,1,0,1)
 partition = (20,20)
-reffe = ReferenceFE(lagrangian, Float64, 2)
+# Old reffe (order 1)
+reffe = ReferenceFE(lagrangian, Float64, 1)
 
 # Construct a solution in the Cartesian Space.
 model = CartesianDiscreteModel(domain, partition)
 Ω1 = Triangulation(model)
 V1 = FESpace(model, reffe)
-f(x) = x[1]^2 + x[2]^2
+f(x) = x[1] + x[2]
 fh = interpolate_everywhere(f, V1) # Old FEFunction
 writevtk(Ω1,"source",cellfields=["fh"=>fh])
 
@@ -33,6 +34,7 @@ end
 partition=(10,10)
 model2 = CartesianDiscreteModel(domain,partition; map=rndm)
 Ω2 = Triangulation(model2)
+# New reffe (order 2)
 reffe = ReferenceFE(lagrangian, Float64, 2)
 V2 = FESpace(model2, reffe)
 
@@ -45,9 +47,10 @@ gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
 # Test evaluate on gh (Generic Cell Field): Fails for some points
 @show evaluate(gh, Point(0.1,0.1)) # --Works
 @show evaluate(gh, Point(0.1,0.5)) # --Does not work
+@show evaluate(gh, VectorValue(rand(2))) # --Does not work
 #evaluate(gh, Point(0.1,0.56)) # --Does not work
 # Works sometimes ...
-for i ∈ 1:10
-    x=CellPoint([VectorValue(rand(2))],Ω2,PhysicalDomain())
-    evaluate(gh, x)
-end
+#for i ∈ 1:10
+#    x=CellPoint([VectorValue(rand(2))],Ω2,PhysicalDomain())
+#    evaluate(gh, x)
+#end

@@ -32,7 +32,7 @@ function rndm(p::Point, D=pt_to_rand)
     y = (s ≈ 1.0 || s ≈ 0.0) ? s : s + 0.012*rand()
     Point(x,y)
 end
-partition=(40,40)
+partition=(20,20)
 # Construct a uniform partition first to build the perturbation
 model = CartesianDiscreteModel(domain,partition)
 # Random permutation of indices
@@ -48,9 +48,7 @@ V2 = FESpace(model2, reffe)
 # Main Solution
 phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
 fh_phys_coords(x) = evaluate(fh, x)
-phys_point_fx = lazy_map(fh_phys_coords, phys_point)
+gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
 
-
-gh = CellField( V2, phys_point_fx )
 # Test evaluate on gh (Generic Cell Field): Fails for some points
 @show evaluate(gh, VectorValue(rand(2))) # Works sometimes ...
