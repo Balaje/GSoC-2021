@@ -41,5 +41,10 @@ phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
 fh_phys_coords(x) = evaluate(fh, x)
 gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
 
-# Write the solution
-writevtk(get_triangulation(gh),"target_sin",cellfields=["fh"=>gh])
+
+# Test evaluate on gh (Generic Cell Field): Fails for some points
+evaluate(gh, Point(0.1,0.1)) # --Works
+evaluate(gh, Point(0.1,0.5)) # --Does not work
+#for i ∈ 1:10
+#    evaluate(gh, VectorValue(rand(2)))
+#end
