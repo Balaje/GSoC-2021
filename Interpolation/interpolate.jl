@@ -30,7 +30,7 @@ function rndm(p::Point)
     y = s + 0.1*sin(2π*r)*sin(2π*s)
     Point(x,y)
 end
-partition=(40,40)
+partition=(10,10)
 model2 = CartesianDiscreteModel(domain,partition; map=rndm)
 Ω2 = Triangulation(model2)
 reffe = ReferenceFE(lagrangian, Float64, 2)
@@ -39,14 +39,18 @@ V2 = FESpace(model2, reffe)
 # Main Solution
 phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
 fh_phys_coords(x) = evaluate(fh, x)
+cell_vals = lazy_map(fh_phys_coords, phys_point)
+v = get_fe_basis(V2)
+cell_basis = get_data(v)
+cell_field = lazy_map(linear_combination, cell_vals, cell_basis)
+gh = GenericCellField(cell_field, get_triangulation(v), PhysicalDomain())
 
 
-gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
 # Test evaluate on gh (Generic Cell Field): Fails for some points
 @show evaluate(gh, Point(0.1,0.1)) # --Works
 @show evaluate(gh, Point(0.1,0.5)) # --Does not work
 #evaluate(gh, Point(0.1,0.56)) # --Does not work
 # Works sometimes ...
-#for i ∈ 1:10
-#    evaluate(gh, VectorValue(rand(2)))
-#end
+for i ∈ 1:10
+    evaluate(gh, VectorValue(rand(2)))
+end
