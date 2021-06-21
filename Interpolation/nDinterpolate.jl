@@ -16,8 +16,8 @@ xmin = 0
 xmax = 1
 ncells = 5
 
-D=2
-#for D=1:2
+
+for D=1:3
     # Define domain and an affine function with arbitrary coeffs.
     domain = repeat([xmin,xmax], D)
     coeff0 = rand(Float64)
@@ -33,7 +33,7 @@ D=2
     base_V1 = FESpace(base_model, base_reffe)
     global fh = interpolate_everywhere(f, base_V1) # Old FEFunbction
 
-    map_types = [:sinusoidal]
+    map_types = [:random, :sinusoidal]
 
     for map_type ∈ map_types
         # Second FE Space
@@ -78,14 +78,12 @@ D=2
         writevtk(get_triangulation(fh),"source"*string(map_type)*string(D),cellfields=["fh"=>fh])
         writevtk(get_triangulation(gh),"target"*string(map_type)*string(D),cellfields=["fh"=>gh])
 
-        xs = [VectorValue(rand(D)) for i in 1:3]
-        for x in xs
-            @show D
-            fx = f(x)
-            fhx = evaluate(fh, x)
-            ghx = evaluate(gh, x)
-        end
-
-        #writevtk(get_triangulation(gh),"target"*string(map_type)*string(D),cellfields=["fh"=>gh])
+        #xs = [VectorValue(rand(D)) for i in 1:3]
+        #for x in xs
+        #@show D
+        #fx = f(x)
+        #fhx = evaluate(fh, x)
+        #ghx = evaluate(gh, x)
+        #end
     end
-#end
+end

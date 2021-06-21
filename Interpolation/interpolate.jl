@@ -26,8 +26,8 @@ writevtk(Ω1,"source",cellfields=["fh"=>fh])
 # Second FE Space
 function rndm(p::Point)
     r, s = p
-    x = r + 0.02*sin(2π*r)*sin(2π*s)
-    y = s + 0.02*sin(2π*r)*sin(2π*s)
+    x = r + 0.1*sin(2π*r)*sin(2π*s)
+    y = s + 0.1*sin(2π*r)*sin(2π*s)
     Point(x,y)
 end
 partition=(40,40)
