@@ -20,3 +20,8 @@ As of now simplest interpolation works. Check these codes:
 
 | ![2d](Images/2d.png) | ![3d](Images/3d.png) |
 | -- | -- |
+
+There is an error currently where the inverse mapping to convert
+points in physical space to reference space fails if the element is
+very distorted. So the tests are currently available only for simplest
+possible deformation.
