@@ -108,24 +108,24 @@ function solveIceVibration(L=10000, h=200, H=800, nev=10, N=5, ω=2*π/200)
     # ----------------------------------
 
     ## Construct the displacement
-    #function u(x, μ, L, λ)
-    #    nev=length(μ);
-    #    ξ=0;
-    #    for m=1:nev
-    #        μₘ=μ[m];
-    #        ηₘ = ((cos(L*μₘ) + cosh(L*μₘ))*(sin(μₘ*x) + sinh(μₘ*x))-
-    #            (sin(L*μₘ) + sinh(L*μₘ))*(cos(μₘ*x) + cosh(μₘ*x)))/
-    #            (cos(L*μₘ) + cosh(L*μₘ));
-    #        ξ = ξ+λ[m]*ηₘ;
-    #    end
-    #    return ξ;
-    #end
+    function u(x, μ, L, λ)
+        nev=length(μ);
+        ξ=0;
+        for m=1:nev
+            μₘ=μ[m];
+            ηₘ = ((cos(L*μₘ) + cosh(L*μₘ))*(sin(μₘ*x) + sinh(μₘ*x))-
+                (sin(L*μₘ) + sinh(L*μₘ))*(cos(μₘ*x) + cosh(μₘ*x)))/
+                (cos(L*μₘ) + cosh(L*μₘ));
+            ξ = ξ+λ[m]*ηₘ;
+        end
+        return ξ;
+    end
 
-    #X=collect(range(0, LL, length=100));
-    #U=zeros(ComplexF64,length(X),1);
-    #for m=1:length(U)
-    #    U[m]=u(X[m], μ, LL, λ);
-    #end
+    X=collect(range(0, LL, length=200));
+    U=zeros(ComplexF64,length(X),1);
+    for m=1:length(U)
+        U[m]=u(X[m], μ, LL, λ);
+    end
 
     # Construct the velocity potential
     POT=ϕ₀+ϕₖ*λ
@@ -138,10 +138,45 @@ function solveIceVibration(L=10000, h=200, H=800, nev=10, N=5, ω=2*π/200)
     Ref = real_Ref .+ 1im*(imag_Ref .+ 1) # Don't know how but works 😉
 
     H = K+AB+B
-    return H, F, Ref, RefModes, RefDiff
+    return H, F, Ref, RefModes, RefDiff, X, U, Lc
 end
 
 function buildRefCoeff(RefDiff, RefModes, λ)
     X1=RefDiff + RefModes*λ
     (2 .+ X1)[1]
+end
+
+
+function plotIce(X,U,ω,ylim=[-2,2],Ref=:none)
+    plt = lineplot(X*Lc,real(U[:,1]), width = 80, xlim = [minimum(X*Lc), maximum(X*Lc)],
+                   ylim=ylim,
+                   xlabel="x in m",
+                   ylabel="η(x,ω) in m",
+                   title="Displacement of Ice for incident T = "*string(round(2π/ω))*" s",
+                   name="Real part")
+    lineplot!(plt,X*Lc,imag(U[:,1]),color=:red, name="Imaginary Part")
+    if(Ref==:none || typeof(Ref)!=Matrix{ComplexF64})
+        return plt
+    else
+        annotate!(plt, :r, 3, "R(ω) = "*string(Ref[1]))
+        annotate!(plt, :r, 4, "|R(ω)| = "*string(round(abs(Ref[1]))))
+    end
+    plt
+end
+
+function plotMode(ω, λ, N)
+    plt=lineplot(ω, abs.(λ[N[1],:]), width = 80,
+                 xlim = [minimum(ω), maximum(ω)],
+                 xlabel="ω in s⁻¹",
+                 ylabel="|λ|",
+                 name="Euler Bernoulli Mode Number "*string(N[1])*" vs ω")
+    if(length(N)>1)
+        for n ∈ 2:length(N)
+            i = N[n]
+            lineplot!(plt, collect(ω), abs.(λ[i,:]),
+                         name="Euler Bernoulli Mode Number "*string(i)*" vs ω")
+        end
+    end
+    plt
+
 end
