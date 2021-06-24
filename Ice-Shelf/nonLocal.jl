@@ -15,7 +15,7 @@ function getMAT(k, kd, H, d, NModes, Ap)
     g = zeros(Complex{Float64},NModes+1,1);
 
     for i=1:NModes+1
-        A[i,i]=k[i]*0.5*(cos(k[i]*H)*sin(k[i]*H)+k[i]*H)/(k[i]*(cos(k[i]*H))^2);
+        A[i,i]=0.5*(cos(k[i]*H)*sin(k[i]*H) + k[i]*H)/(cos(k[i]*H))^2
         f[i]=Ap*innerproduct(k[1], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[1]*H));
         for j=1:NModes+1
             M[i,j]=innerproduct(k[j], kd[i], H, d)/(cos(kd[i]*(H-d))*cos(k[j]*H));
@@ -29,7 +29,7 @@ end
 # Get the non-local matrix on the boundary
 function getMQχ(k, kd, H, d, NModes, Ap, model, Γ, V, V0)
     A,M,f,g=getMAT(k,kd,H,d,NModes,Ap);
-    ndofs=length(model.grid.node_coords); #Get the number of dofs in the domain.
+    ndofs=num_free_dofs(V); #Get the number of dofs in the domain.
     pp=zeros(ComplexF64,NModes+1,ndofs);
     for m=1:NModes+1
         τ(x)=cos(kd[m]*(x[2]+H))/cos(kd[m]*(H-d));

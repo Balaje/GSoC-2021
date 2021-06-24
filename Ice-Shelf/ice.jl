@@ -5,8 +5,10 @@ using Roots
 using SparseArrays
 
 # Add packages
-include("dispersion.jl");
+include("dispersion.jl")
 
-include("nonLocal.jl");
+include("nonLocal.jl")
 
-include("FEMSolve.jl");
+include("FEMSolve.jl")
+
+include("refcoeff.jl")

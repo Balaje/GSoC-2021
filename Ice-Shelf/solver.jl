@@ -1,5 +1,5 @@
 # Some parameters
-ω=2*π/60; # 40s incident wave.
+ω=2*π/200; # 40s incident wave.
 N=5; # Modal expansion in the ocean
 nev=20; #Number of eigenvalues
 L=10000; #Shelf length
@@ -27,7 +27,7 @@ kd=dispersionfreesurface(α, N, HH-dd);
 kd[1]=-kd[1];
 print("Solved dispersion equations\n")
 
-partition=(200,10);
+partition=(100,20);
 
 # Build model for the ice-shelf.
 #iceDomain=(0,L,-d,h-d);
@@ -46,6 +46,7 @@ partition=(200,10);
 ## Build model for the cavity region
 cavDomain=(0,LL,-HH,-dd);
 cavModel=CartesianDiscreteModel(cavDomain,partition);
+cavModel=simplexify(cavModel)
 cavLabels=get_face_labeling(cavModel);
 Ωf=Triangulation(cavModel); #Build the triangulation
 add_tag_from_tags!(cavLabels,"neumannIce",[6]);
@@ -105,6 +106,14 @@ for m=1:length(U)
     U[m]=u(X[m], μ, LL, λ);
 end
 # Construct the velocity potential
-POT=ϕ₀+ϕₖ*λ;
-uh=FEFunction(Vfₕ,real(POT[:,1]))
-writevtk(Ωf,"results",cellfields=["uh"=>uh]); #To visualize the solution.
+POT=ϕ₀+ϕₖ*λ
+real_uh=FEFunction(Vfₕ,real(POT[:,1]))
+imag_uh=FEFunction(Vfₕ,imag(POT[:,1]))
+#writevtk(Ωf,"results",cellfields=["uh"=>uh]); #To visualize the solution.
+
+#Compute the reflection coefficient
+real_Ref = getRefCoeff(real_uh, N, k, kd, HH, dd, Γf₄, Ap)
+imag_Ref = getRefCoeff(imag_uh, N, k, kd, HH, dd, Γf₄, Ap)
+Ref = real_Ref + 1im*(imag_Ref + 1) # Don't know how but works 😉
+
+@show Ref
