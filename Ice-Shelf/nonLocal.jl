@@ -1,7 +1,3 @@
-module nonLocalBoundary
-
-using Gridap
-
 # Function to get the associated matrices on the semi--infinite domain
 function innerproduct(k, kappa, H, d)
     if(abs(k-kappa)>=1e-7)
@@ -53,6 +49,4 @@ function getMQχ(k, kd, H, d, NModes, Ap, model, Γ, V, V0)
     χ=transpose(c)*pp;
 
     return Qϕ,χ;
-end
-
 end

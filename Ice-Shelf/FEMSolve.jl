@@ -1,8 +1,3 @@
-module FEMSolvers
-using Gridap
-import Gridap: ∇
-using Arpack
-
 # Solve the ice-shelf 2d eigenvalue problem. [ε is a function to store the symmetric gradient]
 function solveEigen(iceModel,Vh,Vh0,order,N)
     λ=3500;
@@ -84,7 +79,4 @@ function buildReducedSystem(μ, ϕ₀, ϕⱼ, α, β, γ, Γ, L, ω, V)
     H=K+B+AB;
     λ=H\F;
     return λ, K, B, AB, F;
-end
-
-
 end

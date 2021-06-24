@@ -1,16 +1,3 @@
-using Gridap: ∇
-using Gridap
-using SparseArrays
-using Roots
-
-include("dispersion.jl");
-include("nonLocal.jl");
-include("FEMSolve.jl");
-
-using .nonLocalBoundary
-using .dispersionEquations
-using .FEMSolvers
-
 # Some parameters
 ω=2*π/60; # 40s incident wave.
 N=5; # Modal expansion in the ocean
@@ -34,9 +21,9 @@ dd=d/Lc;
 Ap=(9.8/(1im*ω));
 
 # Solve the dispersion equation
-k=dispersionEquations.dispersionfreesurface(α, N, HH);
+k=dispersionfreesurface(α, N, HH);
 k[1]=-k[1];
-kd=dispersionEquations.dispersionfreesurface(α, N, HH-dd);
+kd=dispersionfreesurface(α, N, HH-dd);
 kd[1]=-kd[1];
 print("Solved dispersion equations\n")
 
@@ -69,7 +56,7 @@ reffe=ReferenceFE(lagrangian,Float64,1);
 Vfₕ=TestFESpace(cavModel,reffe,conformity=:H1); #Test space for cavity.
 
 # ------ Get the non-local boundary condition
-Qϕ,χ=nonLocalBoundary.getMQχ(k, kd, HH, dd, N, Ap, cavModel, Γf₄, Vfₕ, Vfₕ);
+Qϕ,χ=getMQχ(k, kd, HH, dd, N, Ap, cavModel, Γf₄, Vfₕ, Vfₕ);
 print("Done computing non-local boundary condition\n")
 # -----------------------------------------
 
@@ -81,20 +68,20 @@ print("Done computing non-local boundary condition\n")
 
 # ------- Solve for the velocity potentials
 #Diffraction Potential (with a rigid shelf)
-K,f,op=FEMSolvers.getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, χ, 0, LL, 0)
+K,f,op=getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, χ, 0, LL, 0)
 ϕ₀=K\f;
 # Radiation potential from the Eigenmodes
-μ=dispersionEquations.solveEigenEB(nev, LL);# Obtain the Eigenvalues for the beam equation
+μ=solveEigenEB(nev, LL);# Obtain the Eigenvalues for the beam equation
 ϕₖ=zeros(ComplexF64,length(χ),nev)
 for m=1:nev
-    K,f,op=FEMSolvers.getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, 0*χ, μ[m], LL, ω*Lc)
-    ϕₖ[:,m]=K\f; # Using the linear algebra package (raw vector)
+    Km,fm,op1=getLaplaceMatEB(Ωf, Γf₃, Vfₕ, Vfₕ, Qϕ, 0*χ, μ[m], LL, ω*Lc)
+    ϕₖ[:,m]=Km\fm; # Using the linear algebra package (raw vector)
 end
 print("Done computing potentials\n")
 # -----------------------------------------
 
 # ------ Build and solve the reduced system
-λ,K,B,AB,F=FEMSolvers.buildReducedSystem(μ, ϕ₀, ϕₖ, α, 1, dd, Γf₃, LL, ω, Vfₕ);
+λ,K,B,AB,F=buildReducedSystem(μ, ϕ₀, ϕₖ, α, 1, dd, Γf₃, LL, ω, Vfₕ);
 print("Done computing coefficients\n")
 # ----------------------------------
 
