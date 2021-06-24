@@ -27,7 +27,7 @@ function solveIceVibration(L=10000, h=200, H=800, nev=10, N=5, ω=2*π/200)
     k[1]=-k[1];
     kd=dispersionfreesurface(α, N, HH-dd);
     kd[1]=-kd[1];
-    print("Solved dispersion equations\n")
+    #print("Solved dispersion equations\n")
 
     partition=(100,20);
 
@@ -60,7 +60,7 @@ function solveIceVibration(L=10000, h=200, H=800, nev=10, N=5, ω=2*π/200)
 
     # ------ Get the non-local boundary condition
     Qϕ,χ=getMQχ(k, kd, HH, dd, N, Ap, cavModel, Γf₄, Vfₕ, Vfₕ);
-    print("Done computing non-local boundary condition\n")
+    #print("Done computing non-local boundary condition\n")
     # -----------------------------------------
 
     # First attempt at solving the Elasticity Eigenvalue problem
@@ -99,12 +99,12 @@ function solveIceVibration(L=10000, h=200, H=800, nev=10, N=5, ω=2*π/200)
         RefModes[1,m] = real_Ref[1]
         RefModes[2,m] = imag_Ref[1]
     end
-    print("Done computing potentials\n")
+    #print("Done computing potentials\n")
     # -----------------------------------------
 
     # ------ Build and solve the reduced system
     λ,K,B,AB,F=buildReducedSystem(μ, ϕ₀, ϕₖ, α, 1, dd, Γf₃, LL, ω, Vfₕ);
-    print("Done computing coefficients\n")
+    #print("Done computing coefficients\n")
     # ----------------------------------
 
     ## Construct the displacement

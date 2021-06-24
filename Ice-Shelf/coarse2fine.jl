@@ -6,7 +6,7 @@ function coarse2fine(a, b, npts, npts_new, L, h, H, nev, N)
     F_old = zeros(ComplexF64, nev, npts)
     for i ∈ 1:npts
         Hω,Fω,Refω,RefModes_ω,RefDiff_ω, X_ω, U_ω, Lc = solveIceVibration(L, h, H, nev, N, ω[i]);
-        print("\n")
+        #print("\n")
         H_old[:,i] = collect(Iterators.flatten(Hω))
         F_old[:,i] = Fω
     end
