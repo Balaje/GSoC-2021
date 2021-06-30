@@ -28,11 +28,11 @@ writevtk(Ω1,"source",cellfields=["fh"=>fh])
 # Second FE Space
 function rndm(p::Point)
     r, s = p
-    x = r + 0.02*sin(2π*r)*sin(2π*s)
-    y = s + 0.02*sin(2π*r)*sin(2π*s)
+    x = r + 0.08*sin(2π*r)*sin(2π*s)
+    y = s + 0.08*sin(2π*r)*sin(2π*s)
     Point(x,y)
 end
-partition=(10,10)
+partition=(40,40)
 model2 = CartesianDiscreteModel(domain,partition; map=rndm)
 Ω2 = Triangulation(model2)
 # New reffe (order 2)
