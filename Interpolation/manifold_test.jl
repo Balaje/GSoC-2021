@@ -10,7 +10,7 @@ using Test
 # Create domain
 domain = (0,4,0,4)
 partition = (2,2)
-model = simplexify(CartesianDiscreteModel(domain,partition))
+model = CartesianDiscreteModel(domain,partition)
 btrian = BoundaryTriangulation(model,tags=[5,6,7,8])
 
 #GridTopology(btrian)
