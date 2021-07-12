@@ -18,6 +18,7 @@ V1 = FESpace(model, reffe, conformity=:HDiv)
 fh = interpolate_everywhere(f, V1)
 
 # Target RT Space
+reffe = RaviartThomasRefFE(et, p, 1)
 model = CartesianDiscreteModel((0,1,0,1),(10,10))
 V2 = FESpace(model, reffe, conformity=:HDiv)
 
