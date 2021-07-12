@@ -15,9 +15,9 @@ labels = get_face_labeling(model)
 bgface_to_mask = get_face_mask(labels,[5,6,7,8],1)
 bmodel = BoundaryDiscreteModel(Polytope{1},model,bgface_to_mask)
 
-reffe = RaviartThomasRefFE(Float64, QUAD, 0)
-f(x) = VectorValue([x[1], x[2]])
-V1 = FESpace(model, reffe, conformity=:HDiv)
+reffe = ReferenceFE(lagrangian, Float64, 1)
+f(x) = x[1] + x[2]
+V1 = FESpace(bmodel, reffe)
 fh = interpolate_everywhere(f, V1)
 
 # Works if gridtopology.jl is included.
