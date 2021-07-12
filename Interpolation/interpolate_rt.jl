@@ -19,7 +19,7 @@ fh = interpolate_everywhere(f, V1)
 
 # Target RT Space
 reffe = RaviartThomasRefFE(et, p, 1)
-model = CartesianDiscreteModel((0,1,0,1),(10,10))
+model = CartesianDiscreteModel((0,1,0,1),(40,40))
 V2 = FESpace(model, reffe, conformity=:HDiv)
 
 #### RT-INTERPOLATION
@@ -33,7 +33,7 @@ function rt_interpolate(f, V2)
 
   cell_dof_vals = lazy_map(i -> _eval_moment_dof_basis(phys_point_fx[i], bs[i]), 1:num_cells(trian))
 
-  FEFunction(V2, gather_free_values(V2,cell_dof_vals))
+  CellField(V2, cell_dof_vals)
 end
 
 function _eval_moment_dof_basis(vals::AbstractVector, b)
