@@ -21,11 +21,13 @@ V1 = FESpace(bmodel, reffe)
 fh = interpolate_everywhere(f, V1)
 
 # Works if gridtopology.jl is included.
+btrian = get_triangulation(fh)
+GridTopology(btrian)
+
+
+# Still not working
 pt = Point(rand(2))
 @test evaluate(fh, pt) ≈ evaluate(f, pt)
 
-
-
-#GridTopology(btrian)
 
 #GridTopology(bmodel)
