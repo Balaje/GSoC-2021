@@ -8,24 +8,16 @@ using Test
 
 
 # Create domain
-domain = (0,4,0,4)
-partition = (2,2)
-model = CartesianDiscreteModel(domain,partition)
-labels = get_face_labeling(model)
-bgface_to_mask = get_face_mask(labels,[5,6,7,8],1)
-bmodel = BoundaryDiscreteModel(Polytope{1},model,bgface_to_mask)
+domain = (0,1,0,1,0,1)
+cells = (3,3,3)
+bgmodel = simplexify(CartesianDiscreteModel(domain,cells))
+#bgmodel = CartesianDiscreteModel(domain,cells)
+labels = get_face_labeling(bgmodel)
+bgface_to_mask = get_face_mask(labels,[21,22,23,24],2)
+model = BoundaryDiscreteModel(Polytope{2},bgmodel,bgface_to_mask)
 
-reffe = ReferenceFE(lagrangian, Float64, 1)
-f(x) = x[1] + x[2]
-V1 = FESpace(bmodel, reffe)
-fh = interpolate_everywhere(f, V1)
-
-# Works if gridtopology.jl is included.
-pt = Point(rand(2))
-@test evaluate(fh, pt) ≈ evaluate(f, pt)
-
-
-
-#GridTopology(btrian)
-
-#GridTopology(bmodel)
+reffe = ReferenceFE(lagrangian, Float64, 2)
+V₁ = FESpace(model, reffe)
+@show V₁
+f(x) = x[1]^2+x[2]
+fh = interpolate_everywhere(f, V₁)
