@@ -33,7 +33,7 @@ ncells = 5
         base_reffe = ReferenceFE(lagrangian, Float64, base_order)
         # Construct a FEfunction in the base_model.
         base_V1 = FESpace(base_model, base_reffe)
-        global fh = interpolate_everywhere(f, base_V1) # Old FEFunbction
+        fh = interpolate_everywhere(f, base_V1) # Old FEFunbction
         #writevtk(get_triangulation(fh),"source"*string(D),cellfields=["fh"=>fh])
 
         map_types = [:random, :sinusoidal]
@@ -76,7 +76,7 @@ ncells = 5
             phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
             fh_phys_coords(x) = evaluate(fh, x)
             phys_point_fx = lazy_map(fh_phys_coords, phys_point)
-            global gh = CellField( V2, phys_point_fx )
+            gh = CellField( V2, phys_point_fx )
 
             #writevtk(get_triangulation(gh),"target"*string(map_type)*string(D),cellfields=["fh"=>gh])
 
