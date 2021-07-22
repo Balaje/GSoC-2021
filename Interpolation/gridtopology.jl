@@ -1,55 +1,24 @@
-"""
-Function to implement GridTopology for BoundaryTriangulation
-"""
+""" Functions to implement GridTopology """
 
-function GridTopology(grid::BoundaryTriangulation)
-  UnstructuredGridTopology(grid)
-end
+# Restricted Triangulation
+function GridTopology(trian::RestrictedTriangulation)
+  parent_trian = trian.parent_trian
+  parent_cell_to_vertices, parent_vertex_to_node, = _generate_cell_to_vertices_from_grid(parent_trian)
+  cell_to_vertices = Table(lazy_map(Reindex(parent_cell_to_vertices),trian.cell_to_parent_cell))
+  vertex_to_node = parent_vertex_to_node
 
-function UnstructuredGridTopology(grid::BoundaryTriangulation)
-  cell_to_vertices, vertex_to_node, = _generate_cell_to_vertices_from_grid(grid)
-  _generate_grid_topology_from_grid(grid,cell_to_vertices,vertex_to_node)
-end
-
-function UnstructuredGridTopology(grid::BoundaryTriangulation, cell_to_vertices::Table, vertex_to_node::AbstractVector)
-  _generate_grid_topology_from_grid(grid,cell_to_vertices,vertex_to_node)
-end
-
-function _generate_grid_topology_from_grid(grid::BoundaryTriangulation, cell_to_vertices, vertex_to_node)
-
-  node_to_coords = get_node_coordinates(grid)
-  if vertex_to_node == 1:num_nodes(grid)
+  @notimplementedif (! is_regular(parent_trian)) "Extrtacting the GridTopology form a Grid only implemented for the regular case"
+  node_to_coords = get_node_coordinates(trian)
+  if vertex_to_node == 1:num_nodes(trian)
     vertex_to_coords = node_to_coords
   else
     vertex_to_coords = node_to_coords[vertex_to_node]
   end
+  cell_to_type = collect(get_cell_type(trian))
+  polytopes = map(get_polytope, get_reffes(trian))
 
-  cell_to_type = get_cell_type(grid)
-  polytopes = map(get_polytope, get_reffes(grid))
-
-  Geometry.UnstructuredGridTopology(
-    vertex_to_coords,
-    cell_to_vertices,
-    collect(cell_to_type),
-    polytopes,
-    NonOriented())
+  UnstructuredGridTopology(vertex_to_coords, cell_to_vertices, cell_to_type, polytopes, OrientationStyle(parent_trian))
 end
 
-function _generate_cell_to_vertices_from_grid(grid::BoundaryTriangulation)
-  if is_first_order(grid)
-    cell_to_vertices = Table(get_cell_node_ids(grid))
-    vertex_to_node = collect(1:num_nodes(grid))
-    node_to_vertex = vertex_to_node
-  else
-    cell_to_nodes = get_cell_node_ids(grid)
-    cell_to_cell_type = get_cell_type(grid)
-    reffes = get_reffes(grid)
-    cell_type_to_lvertex_to_lnode = map(get_vertex_node, reffes)
-    cell_to_vertices, vertex_to_node, node_to_vertex = Geometry._generate_cell_to_vertices(
-      cell_to_nodes,
-      cell_to_cell_type,
-      cell_type_to_lvertex_to_lnode,
-      num_nodes(grid))
-  end
-  (cell_to_vertices, vertex_to_node, node_to_vertex)
-end
+# Boundary Triangulation
+GridTopology(trian::BoundaryTriangulation) = GridTopology(trian.face_trian)

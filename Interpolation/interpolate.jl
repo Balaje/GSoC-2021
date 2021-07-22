@@ -39,10 +39,16 @@ model2 = CartesianDiscreteModel(domain,partition; map=rndm)
 reffe = ReferenceFE(lagrangian, Float64, 2)
 V2 = FESpace(model2, reffe)
 
-gh = interpolate_everywhere(fh, V2)
+phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
+fh_phys_coords(x) = evaluate(fh, x)
+phys_point_fx = lazy_map(fh_phys_coords, phys_point)
+gh = CellField( V2, phys_point_fx )
 
 
 # Test evaluate on gh (Generic Cell Field): Fails for some points
+# Modify nlsolve in src/Fields/InverseFields.jl
+#     res = nlsolve(df,y₀,method=:newton,linesearch=BackTracking())
+# to make everything work
 @show evaluate(gh, Point(0.1,0.1)) # --Works
 @show evaluate(gh, Point(0.1,0.5)) # --Does not work
 @show evaluate(gh, VectorValue(rand(2))) # --Does not work
