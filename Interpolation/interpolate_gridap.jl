@@ -24,7 +24,7 @@ end
 
 function evaluate!(cache, b::LagrangianDofBasis, field, points)
   c, cf = cache
-  vals = evaluate!(cf,field,b.nodes)
+  vals = evaluate!(cf,field,points)
   ndofs = length(b.dof_to_node)
   T = eltype(vals)
   ncomps = num_components(T)
