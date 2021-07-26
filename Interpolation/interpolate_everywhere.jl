@@ -1,6 +1,8 @@
 using Gridap
 using Gridap.ReferenceFEs
 using Gridap.Arrays
+using Gridap.CellData
+using Gridap.FESpaces
 import Gridap.Arrays.evaluate!
 import Gridap.CellData.CellField
 using Test
