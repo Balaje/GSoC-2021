@@ -6,11 +6,11 @@ using Gridap.Fields
 using Gridap.CellData
 using Gridap.Arrays
 
-struct Interpolatable <: Function
-  uh::FEFunction
+struct Interpolatable{A} <: Function
+  uh::A
   tol::Float64
   function Interpolatable(uh; tol=1e-6)
-    new(uh,tol)
+    new{typeof(uh)}(uh,tol)
   end
 end
 
