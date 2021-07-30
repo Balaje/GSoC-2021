@@ -46,9 +46,7 @@ reffe = ReferenceFE(lagrangian, Float64, 2)
 V2 = FESpace(model2, reffe)
 
 # Main Solution
-phys_point = get_cell_points(get_fe_dof_basis(V2)).cell_phys_point
-fh_phys_coords(x) = evaluate(fh, x)
-gh = CellField( V2, lazy_map(fh_phys_coords, phys_point) )
+gh = interpolate_everywhere_non_compatible_trian(fh, V2)
 
 # Test evaluate on gh (Generic Cell Field): Fails for some points
 @show evaluate(gh, VectorValue(rand(2))) # Works sometimes ...
