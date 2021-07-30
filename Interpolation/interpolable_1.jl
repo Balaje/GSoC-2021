@@ -19,6 +19,7 @@ end
 """
 Some tests
 """
+
 using BenchmarkTools
 
 p = QUAD

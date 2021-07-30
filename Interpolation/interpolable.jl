@@ -54,6 +54,7 @@ end
 """
 Some Tests with optimizations...
 """
+
 using BenchmarkTools
 
 p = QUAD
