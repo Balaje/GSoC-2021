@@ -36,3 +36,33 @@ function _to_physical_domain(b::LagrangianDofBasis, cell_map::Field)
   f_phys_nodes = cell_map(nodes)
   LagrangianDofBasis(f_phys_nodes, b.dof_to_node, b.dof_to_comp, b.node_and_comp_to_dof)
 end
+
+
+## Some Tests ...
+p = QUAD
+D = num_dims(QUAD)
+et = Float64
+source_model = CartesianDiscreteModel((0,1,0,1),(10,10))
+@testset "Test interpolation Lagrangian" begin
+  # Lagrangian space -> Lagrangian space
+  f(x) = x[1] + x[2]
+  reffe = LagrangianRefFE(et, p, 1)
+  V₁ = FESpace(source_model, reffe, conformity=:H1)
+  fh = interpolate_everywhere(f, V₁)
+  # Target Lagrangian Space
+  reffe = LagrangianRefFE(et, p, 2)
+  model = CartesianDiscreteModel((0,1,0,1),(40,40))
+  V₂ = FESpace(model, reffe, conformity=:H1)
+
+  ifh = Interpolatable(fh)
+  try
+    interpolate_everywhere(fh, V₂)
+  catch
+    gh = interpolate_everywhere(ifh, V₂)
+    pts = [VectorValue(rand(2)) for i=1:10]
+    for pt in pts
+      @test gh(pt) ≈ fh(pt)
+    end
+  end
+
+end
