@@ -25,31 +25,54 @@ Functions for Optimizing interpolations:
 - _cell_vals
 - _to_physical_domain
 """
-function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
-  fe_basis = get_fe_dof_basis(V)
-  fh = f.uh
-  trian = get_triangulation(V)
-  cell_maps = get_cell_map(trian)
-  bs = get_data(fe_basis)
-  cache = return_cache(testitem(bs), fh)
-  if(DomainStyle(fe_basis) == ReferenceDomain())
-    cell_vals = lazy_map(i -> evaluate!(cache, _to_physical_domain(bs[i], cell_maps[i]), fh), 1:num_cells(trian))
-  else
-    cell_vals = lazy_map(i -> evaluate!(cache, bs[i], fh), 1:num_cells(trian))
-  end
+
+using Gridap.Helpers
+using Gridap.Arrays
+
+struct PushDofMap <: Map end
+function Arrays.evaluate!(cache, ::PushDofMap, f::Dof, m::Field)
+  @abstractmethod
 end
-function _to_physical_domain(b::MomentBasedDofBasis, cell_map::Field)
-  nodes = b.nodes
-  f_moments = b.face_moments
-  f_phys_nodes = cell_map(nodes)
-  MomentBasedDofBasis(f_phys_nodes, f_moments, b.face_nodes)
-end
-function _to_physical_domain(b::LagrangianDofBasis, cell_map::Field)
-  nodes = b.nodes
-  f_phys_nodes = cell_map(nodes)
-  LagrangianDofBasis(f_phys_nodes, b.dof_to_node, b.dof_to_comp, b.node_and_comp_to_dof)
+function Arrays.evaluate!(cache, ::PushDofMap, f::AbstractArray{<:Dof}, m::Field)
+  @abstractmethod
 end
 
+# Local implementations
+function replace_nodes(f::LagrangianDofBasis, x)
+  LagrangianDofBasis(x, f.dof_to_node, f.dof_to_comp, f.node_and_comp_to_dof)
+end
+function Arrays.return_cache(::PushDofMap, f::LagrangianDofBasis, m::Field)
+  q = f.nodes
+  return_cache(m, q)
+end
+function Arrays.evaluate!(cache, ::PushDofMap, f::LagrangianDofBasis, m::Field)
+  q = f.nodes
+  x = evaluate!(cache,m,q)
+  replace_nodes(f,x)
+end
+function Arrays.lazy_map(::PushDofMap, cell_f::AbstractArray{<:LagrangianDofBasis}, cell_m::AbstractArray{<:Field})
+  cell_q = lazy_map(f->f.nodes, cell_f)
+  cell_x = lazy_map(evaluate, cell_m, cell_q)
+  lazy_map(replace_nodes, cell_f, cell_x)
+end
+
+# CellData
+function CellData.change_domain(a::CellDof, ::ReferenceDomain, ::PhysicalDomain)
+  trian = get_triangulation(a)
+  cell_m = get_cell_map(trian)
+  cell_f_ref = get_data(a)
+  cell_f_phys = lazy_map(PushDofMap(), cell_f_ref, cell_m)
+  CellDof(cell_f_phys, trian, DomainStyle(a))
+end
+function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
+  fe_basis = get_fe_dof_basis(V)
+  trian = get_triangulation(V)
+  fh = f.uh
+  s = CellData.change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
+  bs = get_data(s)
+  cache = return_cache(testitem(bs), fh)
+  cell_vals = lazy_map(i-> evaluate!(cache, bs[i], fh), 1:num_cells(trian))
+end
 
 """
 Some Tests with optimizations...
@@ -70,18 +93,18 @@ reffe = LagrangianRefFE(et, p, 2)
 model = CartesianDiscreteModel((0,1,0,1),(40,40))
 V₂ = FESpace(model, reffe, conformity=:H1)
 
-ifh = Interpolatable(fh)
-@testset "Test interpolation Lagrangian" begin
-  # Lagrangian space -> Lagrangian space
-  try
-    interpolate_everywhere(fh, V₂)
-  catch
-    @btime interpolate_everywhere(ifh, V₂) # Check time for interpolation
-    gh = interpolate_everywhere(ifh, V₂)
-    pts = [VectorValue(rand(2)) for i=1:10]
-    for pt in pts
-      @test gh(pt) ≈ fh(pt)
-    end
-  end
+# ifh = Interpolatable(fh)
+# @testset "Test interpolation Lagrangian" begin
+#   # Lagrangian space -> Lagrangian space
+#   try
+#     interpolate_everywhere(fh, V₂)
+#   catch
+#     @btime interpolate_everywhere(ifh, V₂) # Check time for interpolation
+#     gh = interpolate_everywhere(ifh, V₂)
+#     pts = [VectorValue(rand(2)) for i=1:10]
+#     for pt in pts
+#       @test gh(pt) ≈ fh(pt)
+#     end
+#   end
 
-end
+# end
