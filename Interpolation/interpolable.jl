@@ -5,16 +5,44 @@ using Gridap.ReferenceFEs
 using Gridap.Fields
 using Gridap.CellData
 using Gridap.Arrays
+using Gridap.Geometry
+using StaticArrays
+using NearestNeighbors
+
+include("interpolable_include.jl")
 
 struct Interpolatable{A} <: Function
   uh::A
   tol::Float64
+  cache
   function Interpolatable(uh; tol=1e-6)
-    new{typeof(uh)}(uh,tol)
+    trian = get_triangulation(uh)
+    topo = GridTopology(trian)
+    vertex_coordinates = Geometry.get_vertex_coordinates(topo)
+    kdtree = KDTree(map(nc -> SVector(Tuple(nc)), vertex_coordinates))
+    D = num_cell_dims(trian)
+    vertex_to_cells = get_faces(topo, 0, D)
+    cell_to_ctype = get_cell_type(trian)
+    ctype_to_reffe = get_reffes(trian)
+    ctype_to_polytope = map(get_polytope, ctype_to_reffe)
+    cell_map = get_cell_map(trian)
+    cache1 = kdtree, vertex_to_cells, cell_to_ctype, ctype_to_polytope, cell_map
+    new{typeof(uh)}(uh, tol, cache1)
   end
 end
 
-(f::Interpolatable)(x) = f.uh(x)
+function Arrays.return_cache(f::Interpolatable, x::Point)
+  cache1 = f.cache
+  cell_f = get_array(f.uh)
+  cell_f_cache = array_cache(cell_f)
+  cf = testitem(cell_f)
+  f_cache = return_cache(cf,x)
+  cache2 = cell_f_cache, f_cache, cell_f, f.uh
+  cache1, cache2
+end
+Arrays.return_cache(f::Interpolatable, xs::AbstractVector{<:Point}) = return_cache(f, testitem(xs))
+Arrays.evaluate!(cache, f::Interpolatable, x::Point) = evaluate!(cache, f.uh, x)
+Arrays.evaluate!(cache, f::Interpolatable, xs::AbstractVector{<:Point}) = evaluate!(cache, f.uh, xs)
 
 """
  interpolate_everywhere(Interpolatable(fₕ), V₂)  Works without these routines.
@@ -23,56 +51,17 @@ end
 
 Functions for Optimizing interpolations:
 - _cell_vals
-- _to_physical_domain
 """
 
-using Gridap.Helpers
-using Gridap.Arrays
-
-struct PushDofMap <: Map end
-function Arrays.evaluate!(cache, ::PushDofMap, f::Dof, m::Field)
-  @abstractmethod
-end
-function Arrays.evaluate!(cache, ::PushDofMap, f::AbstractArray{<:Dof}, m::Field)
-  @abstractmethod
-end
-
-# Local implementations
-function replace_nodes(f::LagrangianDofBasis, x)
-  LagrangianDofBasis(x, f.dof_to_node, f.dof_to_comp, f.node_and_comp_to_dof)
-end
-function Arrays.return_cache(::PushDofMap, f::LagrangianDofBasis, m::Field)
-  q = f.nodes
-  return_cache(m, q)
-end
-function Arrays.evaluate!(cache, ::PushDofMap, f::LagrangianDofBasis, m::Field)
-  q = f.nodes
-  x = evaluate!(cache,m,q)
-  replace_nodes(f,x)
-end
-function Arrays.lazy_map(::PushDofMap, cell_f::AbstractArray{<:LagrangianDofBasis}, cell_m::AbstractArray{<:Field})
-  cell_q = lazy_map(f->f.nodes, cell_f)
-  cell_x = lazy_map(evaluate, cell_m, cell_q)
-  lazy_map(replace_nodes, cell_f, cell_x)
-end
-
-# CellData
-function CellData.change_domain(a::CellDof, ::ReferenceDomain, ::PhysicalDomain)
-  trian = get_triangulation(a)
-  cell_m = get_cell_map(trian)
-  cell_f_ref = get_data(a)
-  cell_f_phys = lazy_map(PushDofMap(), cell_f_ref, cell_m)
-  CellDof(cell_f_phys, trian, DomainStyle(a))
-end
 function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
   fe_basis = get_fe_dof_basis(V)
   trian = get_triangulation(V)
-  fh = f.uh
-  s = CellData.change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
-  bs = get_data(s)
-  cache = return_cache(testitem(bs), fh)
-  cell_vals = lazy_map(i-> evaluate!(cache, bs[i], fh), 1:num_cells(trian))
+  fe_basis_phys = change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
+  cache = return_cache(f, Point(0,0));
+  cf = CellField(x->evaluate!(cache, f, x), trian, PhysicalDomain())
+  fe_basis(cf)
 end
+
 
 """
 Some Tests with optimizations...

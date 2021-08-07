@@ -5,15 +5,15 @@ using Gridap.CellData
 using Gridap.Arrays
 using Gridap.FESpaces
 
-struct Interpolatable{A} <: Function
+struct Interpolable{A} <: Function
   uh::A
   tol::Float64
-  function Interpolatable(uh; tol=1e-6)
+  function Interpolable(uh; tol=1e-6)
     new{typeof(uh)}(uh,tol)
   end
 end
 
-function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
+function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolable)
   fe_basis = get_fe_dof_basis(V)
   fh = f.uh
   trian = get_triangulation(V)
