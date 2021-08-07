@@ -82,13 +82,13 @@ V₂ = FESpace(model, reffe, conformity=:H1)
 ifh = Interpolatable(fh)
 
 # Check whether the new implementation is the same as old
-print("\n Check whether: ")
+print("Check whether: ")
 @show FESpaces._cell_vals(V₂, ifh) == _old_cell_vals(V₂, ifh)
 print("\nNew implemenation\n")
 @btime FESpaces._cell_vals(V₂, ifh);
 print("\nOld implemenation\n")
 @btime _old_cell_vals(V₂, ifh);
-
+print("\n")
 
 @testset "Test interpolation Lagrangian" begin
   # Lagrangian space -> Lagrangian space
@@ -101,5 +101,24 @@ print("\nOld implemenation\n")
       @test gh(pt) ≈ fh(pt)
     end
   end
+end
 
+# RT Space -> RT Space
+f(x) = VectorValue([x[1], x[2]])
+reffe = RaviartThomasRefFE(et, p, 0)
+V₁ = FESpace(source_model, reffe, conformity=:HDiv)
+fh = interpolate_everywhere(f, V₁);
+# Target RT Space
+reffe = RaviartThomasRefFE(et, p, 2)
+model = CartesianDiscreteModel((0,1,0,1),(40,40))
+V₂ = FESpace(model, reffe, conformity=:HDiv)
+
+ifh = Interpolatable(fh)
+
+@testset "Test interpolation RT" begin
+  gh = interpolate_everywhere(ifh, V₂)
+  pts = [VectorValue(rand(2)) for i=1:10]
+  for pt in pts
+    @test gh(pt) ≈ fh(pt)
+  end
 end
