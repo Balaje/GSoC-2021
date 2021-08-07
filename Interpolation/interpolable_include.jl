@@ -1,4 +1,14 @@
 ## Methods by @fverdugo
+using Gridap
+using Test
+using Gridap.FESpaces
+using Gridap.ReferenceFEs
+using Gridap.Fields
+using Gridap.CellData
+using Gridap.Arrays
+using Gridap.Geometry
+using StaticArrays
+using NearestNeighbors
 using Gridap.Helpers
 
 struct PushDofMap <: Map end
@@ -12,12 +22,13 @@ function Arrays.evaluate!(cache,::PushDofMap,f::AbstractArray{<:Dof},m::Field)
 end
 
 # Local implementations
-
 function Arrays.return_cache(::PushDofMap,f::LagrangianDofBasis,m::Field)
   q = f.nodes
   return_cache(m,q)
 end
-
+function replace_nodes(f::LagrangianDofBasis,x)
+  LagrangianDofBasis(x, f.dof_to_node, f.dof_to_comp, f.node_and_comp_to_dof)
+end
 function Arrays.evaluate!(cache,::PushDofMap,f::LagrangianDofBasis,m::Field)
   q = f.nodes
   x = evaluate!(cache,m,q)
@@ -28,7 +39,9 @@ function Arrays.return_cache(::PushDofMap,f::MomentBasedDofBasis,m::Field)
   q = f.nodes
   return_cache(m,q)
 end
-
+function replace_nodes(f::MomentBasedDofBasis,x)
+  MomentBasedDofBasis(x, f.face_moments, f.face_nodes)
+end
 function Arrays.evaluate!(cache,::PushDofMap,f::MomentBasedDofBasis,m::Field)
   q = f.nodes
   x = evaluate!(cache,m,q)
@@ -45,7 +58,7 @@ function Arrays.lazy_map(
 
   cell_q = lazy_map(f->f.nodes,cell_f)
   cell_x = lazy_map(evaluate,cell_m,cell_q)
-  lazy_map(replace_nodes,cell_f,cell_x)
+  lazy_map(LagrangianDofBasis,cell_f,cell_x)
 end
 
 function Arrays.lazy_map(

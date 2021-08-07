@@ -1,14 +1,3 @@
-using Gridap
-using Test
-using Gridap.FESpaces
-using Gridap.ReferenceFEs
-using Gridap.Fields
-using Gridap.CellData
-using Gridap.Arrays
-using Gridap.Geometry
-using StaticArrays
-using NearestNeighbors
-
 include("interpolable_include.jl")
 
 struct Interpolatable{A} <: Function
@@ -62,6 +51,14 @@ function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
   fe_basis(cf)
 end
 
+function _old_cell_vals(V::SingleFieldFESpace, f::Interpolatable)
+  fe_basis = get_fe_dof_basis(V)
+  trian = get_triangulation(V)
+  fe_basis_phys = change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
+  bs = get_data(fe_basis_phys)
+  cache = return_cache(testitem(bs), f.uh)
+  cell_vals = lazy_map(i -> evaluate!(cache, bs[i], f.uh), 1:num_cells(trian))
+end
 
 """
 Some Tests with optimizations...
@@ -82,18 +79,27 @@ reffe = LagrangianRefFE(et, p, 2)
 model = CartesianDiscreteModel((0,1,0,1),(40,40))
 V₂ = FESpace(model, reffe, conformity=:H1)
 
-# ifh = Interpolatable(fh)
-# @testset "Test interpolation Lagrangian" begin
-#   # Lagrangian space -> Lagrangian space
-#   try
-#     interpolate_everywhere(fh, V₂)
-#   catch
-#     @btime interpolate_everywhere(ifh, V₂) # Check time for interpolation
-#     gh = interpolate_everywhere(ifh, V₂)
-#     pts = [VectorValue(rand(2)) for i=1:10]
-#     for pt in pts
-#       @test gh(pt) ≈ fh(pt)
-#     end
-#   end
+ifh = Interpolatable(fh)
 
-# end
+# Check whether the new implementation is the same as old
+print("\n Check whether: ")
+@show FESpaces._cell_vals(V₂, ifh) == _old_cell_vals(V₂, ifh)
+print("\nNew implemenation\n")
+@btime FESpaces._cell_vals(V₂, ifh);
+print("\nOld implemenation\n")
+@btime _old_cell_vals(V₂, ifh);
+
+
+@testset "Test interpolation Lagrangian" begin
+  # Lagrangian space -> Lagrangian space
+  try
+    interpolate_everywhere(fh, V₂)
+  catch
+    gh = interpolate_everywhere(ifh, V₂)
+    pts = [VectorValue(rand(2)) for i=1:10]
+    for pt in pts
+      @test gh(pt) ≈ fh(pt)
+    end
+  end
+
+end
