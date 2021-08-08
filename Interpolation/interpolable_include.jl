@@ -74,7 +74,7 @@ end
 
 # In CellData/CellDofs.jl
 
-function change_domain(a::CellDof,::ReferenceDomain,::PhysicalDomain)
+function CellData.change_domain(a::CellDof,::ReferenceDomain,::PhysicalDomain)
   trian = get_triangulation(a)
   cell_m = get_cell_map(trian)
   cell_f_ref = get_data(a)
