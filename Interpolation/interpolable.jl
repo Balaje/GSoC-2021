@@ -1,31 +1,43 @@
-include("interpolable_include.jl")
+#include("interpolable_include.jl")
+using Gridap
+using Test
+using Gridap.FESpaces
+using Gridap.ReferenceFEs
+using Gridap.Fields
+using Gridap.CellData
+using Gridap.Arrays
+using Gridap.Geometry
+using StaticArrays
+using NearestNeighbors
+using Gridap.Helpers
 
 struct Interpolatable{A} <: Function
   uh::A
   tol::Float64
   cache
-  function Interpolatable(uh; tol=1e-6)
-    trian = get_triangulation(uh)
-    topo = GridTopology(trian)
-    vertex_coordinates = Geometry.get_vertex_coordinates(topo)
-    kdtree = KDTree(map(nc -> SVector(Tuple(nc)), vertex_coordinates))
-    D = num_cell_dims(trian)
-    vertex_to_cells = get_faces(topo, 0, D)
-    cell_to_ctype = get_cell_type(trian)
-    ctype_to_reffe = get_reffes(trian)
-    ctype_to_polytope = map(get_polytope, ctype_to_reffe)
-    cell_map = get_cell_map(trian)
-    cache1 = kdtree, vertex_to_cells, cell_to_ctype, ctype_to_polytope, cell_map
-
-    cell_f = get_array(uh)
-    cell_f_cache = array_cache(cell_f)
-    cf = testitem(cell_f)
-    f_cache = return_cache(cf,VectorValue(rand(num_point_dims(trian))))
-    cache2 = cell_f_cache, f_cache, cell_f, uh
-    cache = cache1, cache2
-
-    new{typeof(uh)}(uh, tol, cache)
+  searchmethod
+  function Interpolatable(uh, cache; tol=1e-6, searchmethod=:kdtree)
+    new{typeof(uh)}(uh, tol, cache, searchmethod)
   end
+end
+
+function Interpolatable(uh::CellField; tol=1e-6, searchmethod=:kdtree)
+  if(searchmethod != :kdtree)
+    @notimplemented
+  end
+  trian = get_triangulation(uh)
+  cache1 = CellData._point_to_cell_cache(trian)
+
+  cell_f = get_array(uh)
+  cell_f_cache = array_cache(cell_f)
+  cf = testitem(cell_f)
+  T = eltype(testitem(trian.node_coords))
+  dim = num_point_dims(trian)
+  f_cache = return_cache(cf,VectorValue(rand(T,dim)))
+  cache2 = cell_f_cache, f_cache, cell_f, uh
+  cache = cache1, cache2
+
+  Interpolatable(uh, cache; tol, searchmethod)
 end
 
 Arrays.return_cache(f::Interpolatable, x::Point) = f.cache
@@ -45,19 +57,9 @@ Functions for Optimizing interpolations:
 function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
   fe_basis = get_fe_dof_basis(V)
   trian = get_triangulation(V)
-  fe_basis_phys = change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
   cache = return_cache(f, Point(rand(2)))
-  cf = CellField(x->evaluate!(cache, f, x), trian, PhysicalDomain())
+  cf = CellField(x->evaluate!(cache, f, x), trian, ReferenceDomain())
   fe_basis(cf)
-end
-
-function _old_cell_vals(V::SingleFieldFESpace, f::Interpolatable)
-  fe_basis = get_fe_dof_basis(V)
-  trian = get_triangulation(V)
-  fe_basis_phys = change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
-  bs = get_data(fe_basis_phys)
-  cache = return_cache(testitem(bs), f.uh)
-  cell_vals = lazy_map(i -> evaluate!(cache, bs[i], f.uh), 1:num_cells(trian))
 end
 
 """
@@ -69,7 +71,7 @@ using BenchmarkTools
 p = QUAD
 D = num_dims(QUAD)
 et = Float64
-source_model = CartesianDiscreteModel((0,1,0,1),(10,10))
+source_model = CartesianDiscreteModel((0,1,0,1),(100,100))
 f(x) = x[1] + x[2]
 reffe = LagrangianRefFE(et, p, 1)
 V₁ = FESpace(source_model, reffe, conformity=:H1)
@@ -81,13 +83,8 @@ V₂ = FESpace(model, reffe, conformity=:H1)
 
 ifh = Interpolatable(fh)
 
-# Check whether the new implementation is the same as old
-print("Check whether: ")
-@show FESpaces._cell_vals(V₂, ifh) == _old_cell_vals(V₂, ifh)
-print("\nNew implemenation\n")
+print("\nTime and allocations:\n")
 @btime FESpaces._cell_vals(V₂, ifh);
-print("\nOld implemenation\n")
-@btime _old_cell_vals(V₂, ifh);
 print("\n")
 
 @testset "Test interpolation Lagrangian" begin
