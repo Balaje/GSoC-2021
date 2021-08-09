@@ -1,4 +1,5 @@
-#include("interpolable_include.jl")
+include("interpolable_include.jl")
+
 using Gridap
 using Test
 using Gridap.FESpaces
@@ -58,8 +59,9 @@ function FESpaces._cell_vals(V::SingleFieldFESpace, f::Interpolatable)
   fe_basis = get_fe_dof_basis(V)
   trian = get_triangulation(V)
   cache = return_cache(f, Point(rand(2)))
+  b = change_domain(fe_basis, ReferenceDomain(), PhysicalDomain())
   cf = CellField(x->evaluate!(cache, f, x), trian, ReferenceDomain())
-  fe_basis(cf)
+  lazy_map(evaluate, get_data(b), get_data(cf))
 end
 
 """
@@ -78,7 +80,7 @@ V₁ = FESpace(source_model, reffe, conformity=:H1)
 fh = interpolate_everywhere(f, V₁)
 # Target Lagrangian Space
 reffe = LagrangianRefFE(et, p, 2)
-model = CartesianDiscreteModel((0,1,0,1),(40,40))
+model = CartesianDiscreteModel((0,1,0,1),(90,90))
 V₂ = FESpace(model, reffe, conformity=:H1)
 
 ifh = Interpolatable(fh)
