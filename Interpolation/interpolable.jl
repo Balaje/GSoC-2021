@@ -90,6 +90,12 @@ for n ∈ 1:length(NNS)
   V₂ = FESpace(model, reffe, conformity=:H1)
 
   ifh = Interpolable(fh)
+
+  ## Checking that the field in the new cache is the same as the old one.
+  cache1,cache2 = ifh.cache
+  field_from_cache = cache2[end]
+  @assert fh == field_from_cache
+
   # Lagrangian space -> Lagrangian space
   try
     interpolate_everywhere(fh, V₂)
