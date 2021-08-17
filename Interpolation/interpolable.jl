@@ -92,9 +92,9 @@ for n ∈ 1:length(NNS)
   ifh = Interpolable(fh)
 
   ## Checking that the field in the new cache is the same as the old one.
-  cache1,cache2 = ifh.cache
-  field_from_cache = cache2[end]
-  @assert fh == field_from_cache
+  # cache1,cache2 = ifh.cache
+  # field_from_cache = cache2[end]
+  # @assert fh == field_from_cache
 
   # Lagrangian space -> Lagrangian space
   try
